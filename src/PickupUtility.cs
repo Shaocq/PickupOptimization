@@ -24,8 +24,11 @@ namespace PickupOptimization
     /// 角色的装备槽不参与搜索：装备槽里的背包 / 收纳单元也不作为落位目标。
     ///
     /// 「容器」有两种实现，都要搜索：
-    ///   - Inventory 容器（带 Inventory 组件的物品，如原版背包）；
+    ///   - Inventory 容器（带 Inventory 组件、且带容器标签 Continer / __VSE_Container 的物品）；
     ///   - 槽位容器（带 Slots 的物品，如存储拓展的收纳单元、原版钥匙包 / 注射器收纳包）。
+    ///
+    /// 注意：mod 用 ItemBuilder 造出来的物品普遍带一个空的 Inventory 组件，但它们并不是容器，
+    /// 游戏里也没有打开它们的入口。这类物品必须排除，否则拾取物会被吞进看不见的空间。
     ///
     /// 同类物品的叠加在所有位置中优先进行（按相同的优先级顺序扫描），
     /// 叠加不进去的物品再按上面的顺序占用空位。
@@ -40,6 +43,12 @@ namespace PickupOptimization
 
         /// <summary>存储拓展给所有自定义物品打的容器标记（需同时有槽位才算容器）。</summary>
         private const string VseContainerTag = "__VSE_Container";
+
+        /// <summary>
+        /// 原版「容器」标签（本地化键 Tag_Continer，拼写就是少个 a）。
+        /// 只有带这个标签的物品才算真正的 Inventory 容器。
+        /// </summary>
+        private const string VanillaContainerTag = "Continer";
 
         /// <summary>原版钥匙包（KeyRing）的 TypeID。</summary>
         private const int VanillaKeyRingTypeId = 836;
@@ -273,7 +282,12 @@ namespace PickupOptimization
             if (item == null || depth > MaxContainerDepth)
                 return;
 
-            Inventory inventory = item.Inventory;
+            // 只有真正的容器才允许作为 Inventory 落位目标。
+            // 不能只看 item.Inventory 是否为 null：ItemBuilder.Instantiate 会给它造的每个物品
+            // 无条件挂一个 Inventory 组件（Duckov.ItemBuilders.ItemBuilder.cs），
+            // 于是「装备词缀」的词缀卡之类的非容器物品也带着一个 64 格空 Inventory，
+            // 而游戏没有任何 UI 能打开它 —— 物品会被吞进去、看得见重量看不见物品。
+            Inventory inventory = IsInventoryContainer(item) ? item.Inventory : null;
             if (inventory != null
                 && !excludedInventories.Contains(inventory)
                 && !inventory.Loading
@@ -479,6 +493,45 @@ namespace PickupOptimization
 
                 if (item.Tags != null && item.Tags.Contains(VseContainerTag))
                     return true;
+
+                int typeId = item.TypeID;
+                return typeId == VanillaKeyRingTypeId || typeId == VanillaInjectionBagTypeId;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 判断物品是否是可以用来存放拾取物的「Inventory 容器」。
+        ///
+        /// 不能只判断 item.Inventory 是否为 null：原版 ItemBuilder.Instantiate() 会给它造出的
+        /// 每一个物品都无条件调用 CreateInventoryComponent()，于是 mod 自建的非容器物品
+        /// （例如「装备词缀」的词缀卡）也挂着一个 64 格空 Inventory。这类 Inventory 游戏里
+        /// 没有任何 UI 入口可以打开，物品塞进去就等于消失（重量却照算）。
+        ///
+        /// 因此要求物品带有容器标记：
+        ///   - 原版容器标签 Continer（本地化键 Tag_Continer，原样拼写）；
+        ///   - 存储拓展自定义容器标记 __VSE_Container；
+        ///   - 原版钥匙包 / 注射器收纳包（它们通常走槽位路径，这里一并放行）。
+        /// </summary>
+        private static bool IsInventoryContainer(Item item)
+        {
+            if (item == null)
+                return false;
+
+            try
+            {
+                if (item.Inventory == null)
+                    return false;
+
+                var tags = item.Tags;
+                if (tags != null
+                    && (tags.Contains(VanillaContainerTag) || tags.Contains(VseContainerTag)))
+                {
+                    return true;
+                }
 
                 int typeId = item.TypeID;
                 return typeId == VanillaKeyRingTypeId || typeId == VanillaInjectionBagTypeId;

@@ -2,6 +2,13 @@
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/) 与 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 格式。
 
+## [1.0.2] - 2026-10-24
+
+### 修复
+
+- **物品会被塞进非容器物品的隐藏 Inventory**：原版 `Duckov.ItemBuilders.ItemBuilder.Instantiate()` 会给它造出的每个物品都无条件调用 `CreateInventoryComponent()`，于是 mod 自建的非容器物品（例如「装备词缀」的词缀卡 `421390900/901/902`）也带着一个 64 格空 Inventory，而游戏里没有任何 UI 能打开它。旧版把「带 Inventory 组件的物品」一律当容器，导致主背包满了以后拾取物被塞进这种隐藏空间：拾取提示成功、背包里看不见、重量却照算。
+- 现在只有带容器标记的物品才算 Inventory 容器：原版 `Continer` 标签、存储拓展的 `__VSE_Container` 标签，或原版钥匙包 / 注射器收纳包。槽位容器（钥匙包、注射器收纳包、存储拓展收纳单元）的逻辑不变。
+
 ## [1.0.1] - 2026-10-23
 
 首次开源发布。当前版本包含的全部功能：

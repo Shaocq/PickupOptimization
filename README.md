@@ -2,7 +2,7 @@
 
 [![游戏](https://img.shields.io/badge/游戏-Escape%20from%20Duckov-blue)](https://store.steampowered.com/app/3167020/)
 [![协议](https://img.shields.io/badge/协议-MIT-yellow)](LICENSE)
-[![版本](https://img.shields.io/badge/版本-1.0.1-brightgreen)](CHANGELOG.md)
+[![版本](https://img.shields.io/badge/版本-1.0.2-brightgreen)](CHANGELOG.md)
 
 > 拾取物品时不再只往主背包里塞：按「主背包 → 主背包容器 → 宠物背包 → 宠物背包容器」的顺序存放。
 
@@ -12,7 +12,7 @@
 | 框架 | `Duckov.Modding.ModBehaviour` |
 | 前置 | HarmonyLib（工坊 `3589088839`），必须置于本 mod **之前**加载 |
 | 创意工坊 | `3822260246` |
-| 当前版本 | 1.0.1 |
+| 当前版本 | 1.0.2 |
 | 开源协议 | [MIT](LICENSE) |
 
 ## 为什么需要它
